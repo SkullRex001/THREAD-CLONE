@@ -7,16 +7,16 @@ export const signupUser = async (req, res, next) => {
     try {
 
         let { name, email, username, password } = req.body;
-        console.log(req.body)
+    
 
         username = username.replace(/\s+/g, '_');
 
         const user = await User.findOne({ $or: [{ email }, { username }] })
-        console.log(user)
+     
 
         if (user) {
             return res.status(400).json({
-                message: "User already exists"
+                error: "User already exists"
             })
         }
 
@@ -44,8 +44,8 @@ export const signupUser = async (req, res, next) => {
     }
 
     catch (err) {
-        res.status(500).json({ message: err.message })
-        console.log({ Error: err.message  , path : err.stack})
+        res.status(500).json({ error: err.message })
+        console.log({ Error: err.message, path: err.stack })
     }
 }
 
@@ -55,23 +55,29 @@ export const loginUser = async (req, res) => {
     try {
 
         const { username, password } = req.body;
-        const user = await User.findOne({ username })
+        const user = await User.findOne({ username }).select('+password')
         if (!user) {
             res.status(400).json({
-                success: false,
-                message: "Invalid username or password"
+                error: "Invalid username or password"
             })
         }
 
+    
+
         const isPasswordCorrect = await bcrypt.compare(password, user.password)
+
+      
 
         if (!isPasswordCorrect) {
             return res.status(400).json({ message: "Invalid username or password" })
         }
 
+        
+
         generateTokenAndSetCookies(user._id, res)
 
         res.status(200).json({
+            success : true,
             login: "success",
             user
         })
@@ -79,8 +85,11 @@ export const loginUser = async (req, res) => {
 
     }
     catch (err) {
-        res.status(500).json({ message: err.message })
-        console.log({ error: err.message })
+        res.status(500).json({ error: err.message })
+        console.log({
+            error: err.message,
+            path : err.stack
+        })
     }
 }
 
@@ -100,143 +109,183 @@ export const logout = async (req, res) => {
 
 export const followUnfollowUser = async (req, res, next) => {
 
-    try{
+    try {
 
         const { id } = req.params;
         const userToModify = await User.findById(id);
-    
+
         const currentUser = await User.findById(req.user._id)
-    
+
         if (!userToModify || !currentUser) {
             return res.status(500).json({
-                success: false,
                 error: "User does not exist"
             })
         }
 
-    
-    
+
+
         if (id === req.user._id.toString()) {
             return res.status(400).json({
-                message: "You cannot follow/unfollow yourself"
+                error: "You cannot follow/unfollow yourself"
             })
         }
-    
+
         const isFollowing = currentUser.following.includes(id)
-    
+
         if (isFollowing) {
             await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
-    
+
             await User.findByIdAndUpdate(req.user._id, {
                 $pull: { following: id }
-    
+
             })
 
             res.status(200).json({
-                success : true,
-                action : "user unfollowed"
+                success: true,
+                action: "user unfollowed"
             })
         }
         else {
-            await User.findByIdAndUpdate(id , {$push: {followers : req.user._id}})
-    
-            await User.findByIdAndUpdate(req.user._id , {
-                $push : {following : id}})
+            await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } })
 
-                res.status(200).json({
-                    success : true,
-                    action : "user followed"
-                })
-    
-            }
+            await User.findByIdAndUpdate(req.user._id, {
+                $push: { following: id }
+            })
+
+            res.status(200).json({
+                success: true,
+                action: "user followed"
+            })
+
+        }
 
 
 
 
 
     }
-    catch(err){
+    catch (err) {
 
         res.status(500).json({
             success: false,
-            error : err.message
+            error: err.message
         })
 
         console.log({
-            error : err.message,
-           path : err.stack
+            error: err.message,
+            path: err.stack
         })
 
     }
-  
+
 
 }
 
 
-export const updateUser = async (req , res)=>{
+export const updateUser = async (req, res) => {
 
-    const {password , username} = req.body;
+    const { password, username } = req.body;
 
     const userId = req.user._id
 
- 
 
-    try{
+
+    try {
 
         let user = await User.findById(userId)
 
-    
 
-        if(!user){
+
+        if (!user) {
             return res.status(400).json({
-                message : 'user not found'
+                error: 'user not found'
             })
         }
 
-        if(req.params.id !== userId.toString() ) {
+        if (req.params.id !== userId.toString()) {
             return res.status(400).json({
-                message : 'unauthorized request'
+                error: 'unauthorized request'
             })
 
         }
 
-      
 
-        if(password){
+
+        if (password) {
             const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password , salt)
+            const hashedPassword = await bcrypt.hash(password, salt)
 
             req.body.password = hashedPassword
         }
 
-        if(username){
+        if (username) {
             req.body.username = username.replace(/\s+/g, '_');
         }
 
-     
 
-        const updatedUser = await User.findByIdAndUpdate(userId , req.body , {new : true})
 
-        console.log(req.body)
+        const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true })
 
-       res.status(200).json({
-        updatedUser
-       })
+
+
+        res.status(200).json({
+            success : true,
+            updatedUser
+        })
 
 
 
     }
-    catch(err){
+    catch (err) {
         res.status(500).json({
-            error : err.message
+            error: err.message
         })
 
         console.log({
-            err : err.message
+            err: err.message
         })
     }
 
 
+
+}
+
+
+export const getUserProfile = async (req, res) => {
+    const { username, name } = req.query;
+
+    try {
+
+        const user = await User.find({
+            $or: [
+              { name: { $regex: new RegExp(name, 'i') } },
+              { username: { $regex: new RegExp(username, 'i') } }
+            ]
+          });
+          
+
+        if (!user) {
+            return res.status(400).json({
+                error: "User not found"
+            })
+        }
+
+        res.status(200).json({
+            success : true,
+            user
+        })
+
+    }
+    catch (err) {
+        res.status(500).json({
+            error: err.message
+        })
+
+        console.log({
+            error: err.message,
+            path: err.stack
+        })
+    }
 
 }
 
