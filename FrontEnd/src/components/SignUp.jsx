@@ -22,6 +22,7 @@ import {
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { useSetRecoilState } from 'recoil'
 import { authAtom } from '../Atom/authAtom'
+import { userAtom } from '../Atom/userAtom'
 
 
 
@@ -35,6 +36,9 @@ const SignUp = () => {
         email : "",
         password : ""
     })
+
+    const setUserAtom = useSetRecoilState(userAtom)
+
 
 
     const handleClick = () => {
@@ -81,7 +85,11 @@ const SignUp = () => {
                 return;
             }
 
-            // localStorage.setItem('user-threads' , JSON.stringify(data))
+            localStorage.setItem('user-threads' , JSON.stringify(data))
+
+            setUserAtom(data)
+          
+            
 
             
         } catch (error) {

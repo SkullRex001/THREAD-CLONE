@@ -54,10 +54,12 @@ export const signupUser = async (req, res, next) => {
 export const loginUser = async (req, res) => {
     try {
 
+
+
         const { username, password } = req.body;
         const user = await User.findOne({ username }).select('+password')
         if (!user) {
-            res.status(400).json({
+            return res.status(400).json({
                 error: "Invalid username or password"
             })
         }
@@ -72,15 +74,20 @@ export const loginUser = async (req, res) => {
             return res.status(400).json({ message: "Invalid username or password" })
         }
 
+       
+
         
 
         generateTokenAndSetCookies(user._id, res)
+      
 
         res.status(200).json({
             success : true,
             login: "success",
             user
         })
+
+       
 
 
     }

@@ -17,17 +17,63 @@ import {
     Link,
   } from '@chakra-ui/react'
 
+  import { useShowToast } from '../hooks/useShowToast'
+
   import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { useSetRecoilState } from 'recoil'
 import { authAtom } from '../Atom/authAtom'
+import { userAtom } from '../Atom/userAtom'
 
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false)
     const authAtomState = useSetRecoilState(authAtom)
 
+    const userAtomState = useSetRecoilState(userAtom)
+
+    const showToast = useShowToast()
+
+    const [inputs , setInputs] = useState({
+        username : "",
+        password : ""
+    })
+
     const handleClick = ()=>{
         authAtomState('signup')
+    }
+
+    
+
+    const handleButtonClick = async ()=>{
+
+        try {
+
+            const res = await fetch("/api/users/login" , {
+                method : "POST",
+                headers : {
+                    "Content-Type" : "application/json"
+                },
+                body : JSON.stringify(inputs)
+            })
+
+            const data  = await res.json()
+            if(data.error){
+
+                return showToast("Error" , data.error , "error")         
+            }
+
+            localStorage.setItem("user-threads" , JSON.stringify(data))
+
+            userAtomState(data)
+
+            
+        } catch (error) {
+
+            showToast("Error" , error.message , "error")
+            
+        }
+
+        
     }
 
 
@@ -54,12 +100,16 @@ const Login = () => {
         <Stack spacing={4}>
           <FormControl id="username" isRequired>
             <FormLabel>Username</FormLabel>
-            <Input type="text" />
+            <Input type="text" value={inputs.username} onChange={(e)=>{
+                setInputs({...inputs , username : e.target.value})
+            }} />
           </FormControl>
           <FormControl id="password" isRequired>
             <FormLabel>Password</FormLabel>
             <InputGroup>
-              <Input type={showPassword ? 'text' : 'password'} />
+              <Input type={showPassword ? 'text' : 'password'}  value={inputs.password} onChange={(e)=>{
+                setInputs({...inputs , password : e.target.value})
+              }}/>
               <InputRightElement h={'full'}>
                 <Button
                   variant={'ghost'}
@@ -77,7 +127,7 @@ const Login = () => {
               color={'white'}
               _hover={{
                 bg: 'blue.500',
-              }}>
+              }} onClick={handleButtonClick}>
               Login
             </Button>
           </Stack>
