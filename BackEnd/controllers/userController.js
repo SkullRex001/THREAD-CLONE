@@ -1,7 +1,8 @@
 import User from '../db/models/userModel.js'
-
 import bcrypt from 'bcrypt'
 import generateTokenAndSetCookies from '../utils/generateTokenAndSetCookies.js';
+
+import { v2 } from 'cloudinary';
 
 export const signupUser = async (req, res, next) => {
     try {
@@ -71,7 +72,7 @@ export const loginUser = async (req, res) => {
       
 
         if (!isPasswordCorrect) {
-            return res.status(400).json({ message: "Invalid username or password" })
+            return res.status(400).json({ error: "Invalid username or password" })
         }
 
        
@@ -191,7 +192,7 @@ export const followUnfollowUser = async (req, res, next) => {
 
 export const updateUser = async (req, res) => {
 
-    const { password, username } = req.body;
+    let { password, username , profilePic } = req.body;
 
     const userId = req.user._id
 
@@ -208,6 +209,9 @@ export const updateUser = async (req, res) => {
                 error: 'user not found'
             })
         }
+
+        console.log(userId)
+        console.log(req.params.id)
 
         if (req.params.id !== userId.toString()) {
             return res.status(400).json({
@@ -227,6 +231,23 @@ export const updateUser = async (req, res) => {
 
         if (username) {
             req.body.username = username.replace(/\s+/g, '_');
+        }
+
+        if(profilePic){
+
+            if(user.profilePic){
+
+                await v2.uploader.destroy(user.profilePic.split("/").pop().split(".")[0])
+
+            }
+
+            const uplodedResponse = await v2.uploader.upload(profilePic)
+
+            profilePic = uplodedResponse.secure_url;
+            req.body.profilePic = profilePic
+
+            
+
         }
 
 

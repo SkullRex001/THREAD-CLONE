@@ -1,13 +1,19 @@
 import React from 'react'
-import { Button } from '@chakra-ui/react'
+import { Button, useColorMode } from '@chakra-ui/react'
 import { useSetRecoilState } from 'recoil'
 import { userAtom } from '../Atom/userAtom'
 import { useToast } from '@chakra-ui/react'
 import { useShowToast } from '../hooks/useShowToast'
+import { IoLogOut } from "react-icons/io5"; //light
+import { IoLogOutOutline } from "react-icons/io5"; //dark
+
 
 const LogoutButton = () => {
     const setUserAtom = useSetRecoilState(userAtom)
     const toast = useShowToast()
+    const { colorMode, toggleColorMode } = useColorMode()
+
+
     
 
     const handleClick = async ()=>{
@@ -46,8 +52,8 @@ const LogoutButton = () => {
 
 
   return (
-    <Button position={"fixed"} top={"30px"} right={"30px"} size={"sm"} onClick={handleClick}>
-        Logout
+    <Button position={"fixed"} top={"30px"} right={"30px"} size={"md"} onClick={handleClick}>
+        {colorMode === 'light'? <IoLogOut size={"30px"}/> : <IoLogOutOutline size={"30px"}/>}
     </Button>
   )
 }

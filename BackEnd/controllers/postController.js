@@ -1,61 +1,61 @@
 import Post from '../db/models/postModel.js'
 import User from '../db/models/userModel.js'
 
-export const createPost = async (req , res)=>{
+export const createPost = async (req, res) => {
 
-    try{
+    try {
 
-        const {postedBy , text , img} = req.body;
+        const { postedBy, text, img } = req.body;
 
-        if(!postedBy && (!text || !img)){
+        if (!postedBy && (!text || !img)) {
 
             return res.status(400).json({
-                message : 'Cannot post without image or image'
+                message: 'Cannot post without image or image'
             })
 
         }
 
         const user = await User.findById(postedBy)
-        if(!user){
-            return res.satus(404).json({message : "User not found"})
+        if (!user) {
+            return res.satus(404).json({ message: "User not found" })
         }
 
-        if(user._id.toString() !== req.user._id.toString()) {
+        if (user._id.toString() !== req.user._id.toString()) {
             return res.status(401).json({
-            message : 'Unauthorized to create post'
+                message: 'Unauthorized to create post'
             })
         }
 
         const maxLength = 500;
 
-        if(text.length > maxLength){
+        if (text.length > maxLength) {
             return res.status(400).json({
-                message : `Text must be less than ${maxLength} characters`
+                message: `Text must be less than ${maxLength} characters`
             })
         }
 
         const newPost = new Post({
-            postedBy , text , img
+            postedBy, text, img
         })
 
         await newPost.save()
 
         res.status(201).json({
-            message : "post has been successfully created"  , newPost
+            message: "post has been successfully created", newPost
         })
 
 
 
     }
 
-    catch(err) {
+    catch (err) {
         res.status(500).json({
-            error : err.message,
+            error: err.message,
         })
 
         console.log({
-            error : err.message,
-            path : err.stack
+            error: err.message,
+            path: err.stack
 
         })
     }
@@ -65,57 +65,57 @@ export const createPost = async (req , res)=>{
 
 
 
-export const deletePost = async (req , res )=>{
-    try{
+export const deletePost = async (req, res) => {
+    try {
 
-        const {id} = req.params
-       const post =  await Post.findById(id)
+        const { id } = req.params
+        const post = await Post.findById(id)
 
-       if(!post) {
-        return  res.status(404).json({
-            message : 'no post found'
-        })
-       }
+        if (!post) {
+            return res.status(404).json({
+                message: 'no post found'
+            })
+        }
 
-       if(post.postedBy.toString() !== req.user._id.toString()){
-        return res.satus(401).json({
-            message : "Unauthorized to delete post"
-        })
-       }
+        if (post.postedBy.toString() !== req.user._id.toString()) {
+            return res.satus(401).json({
+                message: "Unauthorized to delete post"
+            })
+        }
 
         await Post.findByIdAndDelete(id)
 
-        
+
         res.status(200).json({
-            message : 'Post has been deleted'
+            message: 'Post has been deleted'
         })
 
-        
+
 
     }
 
-    catch(err){
+    catch (err) {
         res.status(500).json({
-            error : err.message
+            error: err.message
         })
 
         console.log({
-            message : err.message,
-            path : err.stack
+            message: err.message,
+            path: err.stack
         })
     }
 }
 
-export const getPost = async (req , res )=>{
-    try{
+export const getPost = async (req, res) => {
+    try {
 
-        const {id} = req.params;
+        const { id } = req.params;
 
         const post = await Post.findById(id)
 
-        if(!post) {
+        if (!post) {
             res.status(404).json({
-                message : "no post found"
+                message: "no post found"
 
             })
         }
@@ -128,14 +128,14 @@ export const getPost = async (req , res )=>{
 
     }
 
-    catch(err){
+    catch (err) {
         res.status(500).json({
-            error : err.message
+            error: err.message
         })
 
         console.log({
-            message : err.message,
-            path : err.stack
+            message: err.message,
+            path: err.stack
         })
     }
 }
@@ -152,7 +152,7 @@ export const getPost = async (req , res )=>{
 
 
 
-       
+
 
 
 //     }
@@ -173,80 +173,80 @@ export const getPost = async (req , res )=>{
 
 
 
-export const likeUnlikePost = async (req ,res)=>{
+export const likeUnlikePost = async (req, res) => {
     try {
 
-        const {id} = req.params;
+        const { id } = req.params;
 
         const userId = req.user._id;
 
         const post = await Post.findById(id)
 
-        if(!post) {
+        if (!post) {
             return res.status(404).json({
-                message : "post not found"
+                message: "post not found"
             })
         }
 
 
         const userLikedPost = post.likes.includes(userId);
 
-        if(userLikedPost){
-            await Post.updateOne({_id : id} , {
-                $pull : {likes : userId}
+        if (userLikedPost) {
+            await Post.updateOne({ _id: id }, {
+                $pull: { likes: userId }
             })
 
             res.status(200).json({
-                message : "Post unliked successfully"
+                message: "Post unliked successfully"
             })
         } else {
             post.likes.push(userId)
             await post.save()
             res.status(200).json({
-                message : "Post liked successfully"
+                message: "Post liked successfully"
             })
         }
-        
+
     } catch (error) {
 
         res.status(500).json({
-            message : error.message
+            message: error.message
 
         })
 
         console.log({
-            error : error.message,
-            path : error.stack
+            error: error.message,
+            path: error.stack
         })
-        
+
     }
 }
 
 
 
-export const replyToPost = async (req , res)=>{
+export const replyToPost = async (req, res) => {
     try {
 
-        const {text} = req.body;
+        const { text } = req.body;
         const id = req.params.id;
         const userId = req.user._id;
         const userProfilePic = req.user.profilePic;
         const username = req.user.username;
 
-        if(!text) {
-            return res.status(404).json({message : "Text filed is required"})
+        if (!text) {
+            return res.status(404).json({ message: "Text filed is required" })
         }
 
         const post = await Post.findById(id)
 
-        if(!post){
+        if (!post) {
             return res.status(404).json({
-                message : "Post not found"
+                message: "Post not found"
             })
         }
 
         const reply = {
-            userId , text , userProfilePic , username
+            userId, text, userProfilePic, username
         }
 
         post.replies.push(reply)
@@ -255,49 +255,49 @@ export const replyToPost = async (req , res)=>{
 
 
         res.status(200).json({
-            message : 'Reply added successfully'
+            message: 'Reply added successfully'
         })
 
 
-        
+
     } catch (error) {
         res.status(500).json({
-            message : error.message
+            message: error.message
 
         })
 
         console.log({
-            error : error.message,
-            path : error.stack
+            error: error.message,
+            path: error.stack
         })
-        
+
     }
 }
 
-export const getFeedPost = async (req  ,res)=>{
+export const getFeedPost = async (req, res) => {
 
     try {
 
         const userId = req.user._id;
-    
+
         const user = await User.findById(userId)
-        if(!user){
+        if (!user) {
             return res.status(404).json({
-                message : "User not found"
+                message: "User not found"
             })
         }
 
-      
+
 
         const following = user.following
 
         const feedPosts = await Post.find({
-            postedBy : {$in: following}
-        }).sort({createdAt:-1})
+            postedBy: { $in: following }
+        }).sort({ createdAt: -1 })
 
-        if(!feedPosts){
-          return  res.status(404).json({
-                message : "Something went wrong"
+        if (!feedPosts) {
+            return res.status(404).json({
+                message: "Something went wrong"
             })
         }
 
@@ -306,19 +306,19 @@ export const getFeedPost = async (req  ,res)=>{
         })
 
 
-        
+
     } catch (error) {
 
         res.status(500).json({
-            error : error.message
+            error: error.message
         })
 
         console.log({
-            error : error.message,
-            path : error.stack
+            error: error.message,
+            path: error.stack
         })
 
-        
+
     }
 
 }
