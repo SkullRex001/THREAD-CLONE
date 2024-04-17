@@ -11,11 +11,19 @@ import { useRecoilValue } from 'recoil'
 import HomePage from './pages/HomePage'
 import LogoutButton from './components/LogoutButton'
 import UpdateProfilePage from './pages/UpdateProfilePage'
+import { searchUser } from './Atom/userSearch'
+import UserNotFound from './components/UserNotFound'
+
+
 
 
 function App() {
    const user = useRecoilValue(userAtom)
-   console.log(user)
+
+   const searchResult = useRecoilValue(searchUser)
+   console.log(searchResult )
+  
+
 
   return (
     <>
@@ -26,7 +34,7 @@ function App() {
         <Route path = {'/'} element = {user? <HomePage/> : <Navigate to={'/auth'}/>}/>
 
         <Route path='/auth' element = {!user? <AuthPage/> : <Navigate to={'/'}/>}/>
-        <Route path = '/:username' element = {<UserPage/>}/>
+        <Route path = '/:username' element = {searchResult?<UserPage/> :<UserNotFound/> }/>
         <Route path = '/:username/post/:pid' element = {<PostPage/>}/>
         <Route path='/update' element = {user? <UpdateProfilePage/> : <Navigate to={'/auth'}/>}/>
       </Routes>

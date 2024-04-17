@@ -1,8 +1,46 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import UserHeader from '../components/UserHeader'
 import UserPost from '../components/UserPost'
+import { useParams } from 'react-router-dom'
+import { useShowToast } from '../hooks/useShowToast'
+import { useSetRecoilState } from 'recoil'
+import { searchUser } from '../Atom/userSearch'
 
 const UserPage = () => {
+
+  const setUserSearchAtom = useSetRecoilState(searchUser)
+
+  const [user , setUser] = useState(null)
+
+  const {username} = useParams()
+
+  const Toast = useShowToast()
+
+  useEffect(()=>{
+    const getUser = async()=>{
+      try {
+        const res = await fetch(`/api/users/profile/${username}`)
+        const data = await res.json()
+
+  
+     
+        if(data.error){
+          return setUserSearchAtom(null)
+        }
+
+        setUserSearchAtom(data.user)
+        
+      } catch (error) {
+        Toast("Error" , error.message , "error")
+        
+      }
+    }
+
+    getUser()
+  } , [username])
+
+
+
   return (
     <>
     <UserHeader/>

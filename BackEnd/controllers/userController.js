@@ -8,12 +8,12 @@ export const signupUser = async (req, res, next) => {
     try {
 
         let { name, email, username, password } = req.body;
-    
+
 
         username = username.replace(/\s+/g, '_');
 
-        const user = await User.findOne({ $or: [{ email }, { username }] })
-     
+        let user = await User.findOne({ $or: [{ email }, { username }] })
+
 
         if (user) {
             return res.status(400).json({
@@ -25,7 +25,7 @@ export const signupUser = async (req, res, next) => {
 
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        const newUser = new User({
+        user = new User({
             name,
             email,
             username,
@@ -33,13 +33,13 @@ export const signupUser = async (req, res, next) => {
 
         })
 
-        await newUser.save()
+        await user.save()
 
-        generateTokenAndSetCookies(newUser._id, res)
+        generateTokenAndSetCookies(user._id, res)
 
         res.status(200).json({
             success: true,
-            newUser
+            user
         })
 
     }
@@ -58,6 +58,9 @@ export const loginUser = async (req, res) => {
 
 
         const { username, password } = req.body;
+
+        console.log(username)
+        console.log(password)
         const user = await User.findOne({ username }).select('+password')
         if (!user) {
             return res.status(400).json({
@@ -65,30 +68,30 @@ export const loginUser = async (req, res) => {
             })
         }
 
-    
+
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password)
 
-      
+
 
         if (!isPasswordCorrect) {
             return res.status(400).json({ error: "Invalid username or password" })
         }
 
-       
 
-        
+
+
 
         generateTokenAndSetCookies(user._id, res)
-      
+
 
         res.status(200).json({
-            success : true,
+            success: true,
             login: "success",
             user
         })
 
-       
+
 
 
     }
@@ -96,7 +99,7 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ error: err.message })
         console.log({
             error: err.message,
-            path : err.stack
+            path: err.stack
         })
     }
 }
@@ -192,7 +195,7 @@ export const followUnfollowUser = async (req, res, next) => {
 
 export const updateUser = async (req, res) => {
 
-    let { password, username , profilePic } = req.body;
+    let { password, username, profilePic } = req.body;
 
     const userId = req.user._id
 
@@ -210,9 +213,6 @@ export const updateUser = async (req, res) => {
             })
         }
 
-        console.log(userId)
-        console.log(req.params.id)
-
         if (req.params.id !== userId.toString()) {
             return res.status(400).json({
                 error: 'unauthorized request'
@@ -222,20 +222,14 @@ export const updateUser = async (req, res) => {
 
 
 
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt)
-
-            req.body.password = hashedPassword
-        }
 
         if (username) {
             req.body.username = username.replace(/\s+/g, '_');
         }
 
-        if(profilePic){
+        if (profilePic) {
 
-            if(user.profilePic){
+            if (user.profilePic) {
 
                 await v2.uploader.destroy(user.profilePic.split("/").pop().split(".")[0])
 
@@ -246,19 +240,45 @@ export const updateUser = async (req, res) => {
             profilePic = uplodedResponse.secure_url;
             req.body.profilePic = profilePic
 
-            
+
 
         }
 
+        console.log(userId)
 
 
-        const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true })
+        if (password.length >= 6) {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt)
+
+            req.body.password = hashedPassword
+            user = await User.findByIdAndUpdate(userId, req.body, { new: true })
+            console.log(user)
+
+            return res.status(200).json({
+                success: true,
+                user
+            })
+        }
+
+        user = await User.findByIdAndUpdate(userId, {
+            name: req.body.name,
+            username: req.body.username,
+            email: req.body.email,
+            profilePic: req.body.profilePic,
+            bio: req.body.bio
+
+        }, { new: true })
+
+        console.log(user)
+
+        user.password = null
 
 
 
         res.status(200).json({
-            success : true,
-            updatedUser
+            success: true,
+            user
         })
 
 
@@ -279,18 +299,18 @@ export const updateUser = async (req, res) => {
 }
 
 
-export const getUserProfile = async (req, res) => {
+export const searchUserProfile = async (req, res) => {
     const { username, name } = req.query;
 
     try {
 
         const user = await User.find({
             $or: [
-              { name: { $regex: new RegExp(name, 'i') } },
-              { username: { $regex: new RegExp(username, 'i') } }
+                { name: { $regex: new RegExp(name, 'i') } },
+                { username: { $regex: new RegExp(username, 'i') } }
             ]
-          });
-          
+        });
+
 
         if (!user) {
             return res.status(400).json({
@@ -299,7 +319,7 @@ export const getUserProfile = async (req, res) => {
         }
 
         res.status(200).json({
-            success : true,
+            success: true,
             user
         })
 
@@ -317,6 +337,39 @@ export const getUserProfile = async (req, res) => {
 
 }
 
+
+export const getUserProfile = async (req , res) =>{
+    try {
+        const {username} = req.params
+
+        const user = await User.findOne({
+         username: { $regex: new RegExp(username, 'i')
+        }})
+
+
+
+        if(!user){
+           return res.status(400).json({
+                error : "User Not Found"
+            })
+        }
+
+        res.status(200).json({
+            success : true ,
+            user
+        })
+        
+    } catch (error) {
+        console.log({
+            error : error.message,
+            path : error.stack
+        })
+
+        res.status(500).json({
+            error : "Something went wrong"
+        })
+    }
+}
 
 
 

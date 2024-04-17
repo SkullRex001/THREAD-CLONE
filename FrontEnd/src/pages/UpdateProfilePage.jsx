@@ -24,7 +24,7 @@ const UpdateProfilePage = () => {
 
   const toast = useShowToast()
 
-    const {handleImageChange , imgUrl} = usePreviewImg()
+    let {handleImageChange , imgUrl} = usePreviewImg()
 
     const fileRef = useRef(null)
 
@@ -32,7 +32,7 @@ const UpdateProfilePage = () => {
 
 
     const [inputs , setInputs] = useState({
-        ...user.user , password : ""})
+        ...user.user , password : ''})
 
         const handleSubmit = async () =>{
           try {
@@ -53,14 +53,21 @@ const UpdateProfilePage = () => {
             if(data.error){
              return toast("Error" , data.error , "error")
             }
-
-            toast("Success" , "Porfile Has Been Updated" , "success")
-
-            setUser(data)
-
-            localStorage.setItem("user-threads" , JSON.stringify(data))
-
             
+            if(data.user){
+              toast("Success" , "Porfile Has Been Updated" , "success")
+
+              setUser(data)
+  
+             return  localStorage.setItem("user-threads" , JSON.stringify(data))
+            }
+
+            // console.log(data.user)
+            // imgUrl = null;
+            return toast("Error" , "Please try again later" , "error")
+            
+
+
           } catch (error) {
 
             toast("Error" , error.message , "error")
