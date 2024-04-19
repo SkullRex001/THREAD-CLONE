@@ -4,7 +4,8 @@ import validator from 'validator'
 const userSchema = mongoose.Schema({
     name: {
         type: String,
-        required: [true , "name is required"]
+        required: [true , "name is required"],
+        trim : true
     },
 
     username: {
@@ -12,19 +13,22 @@ const userSchema = mongoose.Schema({
         required: [true , "username is required"],
         unique: true,
         minLength: [5, "username to short "],
+        trim : true
     },
 
     email: {
         type: String,
         required: [true , "email is required"],
         unique: true,
-        validate: [validator.isEmail, "please enter a valid email"]
+        validate: [validator.isEmail, "please enter a valid email"],
+        trim : true
     },
     password: {
         type: String,
         minLength: 6,
         required: [true , 'password is required'],
         select: false,
+        trim : true
     },
 
     profilePic: {
@@ -44,7 +48,8 @@ const userSchema = mongoose.Schema({
     bio: {
         type: String,
         default: "",
-        maxLength: [500, "bio is too long"]
+        maxLength: [500, "bio is too long"],
+        trim : true
 
     },
 }, {

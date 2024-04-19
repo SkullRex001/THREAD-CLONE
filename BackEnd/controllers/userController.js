@@ -123,7 +123,7 @@ export const followUnfollowUser = async (req, res, next) => {
     try {
 
         const { id } = req.params;
-        const userToModify = await User.findById(id);
+        let userToModify = await User.findById(id);
 
         const currentUser = await User.findById(req.user._id)
 
@@ -144,7 +144,7 @@ export const followUnfollowUser = async (req, res, next) => {
         const isFollowing = currentUser.following.includes(id)
 
         if (isFollowing) {
-            await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+           userToModify =  await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } } , {new : true});
 
             await User.findByIdAndUpdate(req.user._id, {
                 $pull: { following: id }
@@ -153,11 +153,12 @@ export const followUnfollowUser = async (req, res, next) => {
 
             res.status(200).json({
                 success: true,
-                action: "user unfollowed"
+                action: "user unfollowed",
+                user : userToModify
             })
         }
         else {
-            await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } })
+            userToModify =   await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } } , {new : true})
 
             await User.findByIdAndUpdate(req.user._id, {
                 $push: { following: id }
@@ -165,7 +166,8 @@ export const followUnfollowUser = async (req, res, next) => {
 
             res.status(200).json({
                 success: true,
-                action: "user followed"
+                action: "user followed",
+                user : userToModify
             })
 
         }
@@ -195,7 +197,7 @@ export const followUnfollowUser = async (req, res, next) => {
 
 export const updateUser = async (req, res) => {
 
-    let { password, username, profilePic } = req.body;
+    let { password, username, profilePic , bio , name , email } = req.body;
 
     const userId = req.user._id
 
@@ -260,6 +262,13 @@ export const updateUser = async (req, res) => {
                 user
             })
         }
+
+        req.body.name  = name || user.name
+        req.body.bio  = bio || user.bio
+        req.body.email  = email || user.email
+        req.body.profilePic  = profilePic || user.profilePic
+
+
 
         user = await User.findByIdAndUpdate(userId, {
             name: req.body.name,
@@ -345,6 +354,8 @@ export const getUserProfile = async (req , res) =>{
         const user = await User.findOne({
          username: { $regex: new RegExp(username, 'i')
         }})
+
+        console.log(user)
 
 
 

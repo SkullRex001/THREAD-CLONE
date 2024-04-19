@@ -23,6 +23,7 @@ import { useShowToast } from '../hooks/useShowToast'
 const UpdateProfilePage = () => {
 
   const toast = useShowToast()
+  const [updating , setUpdating] = useState(false)
 
     let {handleImageChange , imgUrl} = usePreviewImg()
 
@@ -35,9 +36,8 @@ const UpdateProfilePage = () => {
         ...user.user , password : ''})
 
         const handleSubmit = async () =>{
+          setUpdating(true)
           try {
-
-            console.log(user)
 
             const res = await fetch(`api/users/updateprofile/${user.user._id}` , {
               method : "POST",
@@ -73,6 +73,10 @@ const UpdateProfilePage = () => {
             toast("Error" , error.message , "error")
             
             
+          }
+
+          finally{
+            setUpdating(false)
           }
 
         }
@@ -196,7 +200,7 @@ const UpdateProfilePage = () => {
                 w="full"
                 _hover={{
                   bg: 'blue.500',
-                }} onClick={handleSubmit}>
+                }} onClick={handleSubmit} isLoading = {updating}>
                 Submit
               </Button>
             </Stack>

@@ -8,6 +8,7 @@ import { IoLogOut } from "react-icons/io5"; //light
 import { IoLogOutOutline } from "react-icons/io5"; //dark
 
 
+
 const LogoutButton = () => {
     const setUserAtom = useSetRecoilState(userAtom)
     const toast = useShowToast()
@@ -52,7 +53,7 @@ const LogoutButton = () => {
 
 
   return (
-    <Button position={"fixed"} top={"30px"} right={"30px"} size={"md"} onClick={handleClick}>
+ <Button position={"fixed"} top={"30px"} right={"30px"} size={"md"} onClick={handleClick}>
         {colorMode === 'light'? <IoLogOut size={"30px"}/> : <IoLogOutOutline size={"30px"}/>}
     </Button>
   )

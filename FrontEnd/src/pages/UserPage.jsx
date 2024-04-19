@@ -3,16 +3,17 @@ import UserHeader from '../components/UserHeader'
 import UserPost from '../components/UserPost'
 import { useParams } from 'react-router-dom'
 import { useShowToast } from '../hooks/useShowToast'
-import { useSetRecoilState } from 'recoil'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 import { searchUser } from '../Atom/userSearch'
+import UserNotFound from '../components/UserNotFound'
 
 const UserPage = () => {
 
   const setUserSearchAtom = useSetRecoilState(searchUser)
-
-  const [user , setUser] = useState(null)
+  const searchResult = useRecoilValue(searchUser)
 
   const {username} = useParams()
+
 
   const Toast = useShowToast()
 
@@ -22,13 +23,20 @@ const UserPage = () => {
         const res = await fetch(`/api/users/profile/${username}`)
         const data = await res.json()
 
+        console.log("data--> " ,data)
+      
+      
+
   
      
         if(data.error){
+          
           return setUserSearchAtom(null)
         }
 
         setUserSearchAtom(data.user)
+        console.log("searchAtom -->" , searchResult)
+ 
         
       } catch (error) {
         Toast("Error" , error.message , "error")
@@ -39,7 +47,15 @@ const UserPage = () => {
     getUser()
   } , [username])
 
+   
 
+  console.log("search result -->" , searchResult)
+
+  if(!searchResult){
+    return(
+      <UserNotFound/>
+    )
+  }
 
   return (
     <>
